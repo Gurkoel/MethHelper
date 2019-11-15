@@ -1,3 +1,63 @@
+_G.MethHelper = _G.MethHelper or {}
+MethHelper._path = ModPath
+MethHelper._data_path = ModPath .. "saved_options_meth_helper.txt"
+MethHelper._data = {} 
+
+function MethHelper:Save()
+	local file = io.open( self._data_path, "w+" )
+	if file then
+		file:write( json.encode( self._data ) )
+		file:close()
+	end
+end
+
+function MethHelper:Load()
+	local file = io.open( self._data_path, "r" )
+	if file then
+		self._data = json.decode( file:read("*all") )
+		file:close()
+	end
+end
+
+Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_MethHelper", function( loc )
+	loc:load_localization_file( MethHelper._path .. "menu/" .. "lang.json")
+end)
+
+Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_MethHelper", function( menu_manager )
+
+	--[[
+		Setup our callbacks as defined in our item callback keys, and perform our logic on the data retrieved.
+	]]
+	MenuCallbackHandler.callback_meth_helper_active = function(self, item)
+		MethHelper._data.meth_helper_active_value = (item:value() == "on" and true or false)
+		MethHelper:Save()
+		MethHelper.active_toggle = item:value()
+		log("Active Toggle is: " .. item:value())
+	end
+
+	MenuCallbackHandler.callback_meth_helper_silent = function(self, item)
+		MethHelper._data.meth_helper_silent_value = (item:value() == "on" and true or false)
+		MethHelper:Save()
+		MethHelper.silent_toggle = item:value()
+		log("Silent Toggle is: " .. item:value())
+	end
+
+
+	--[[
+		Load our previously saved data from our save file.
+	]]
+	MethHelper:Load()
+
+	--[[
+		Load our menu json file and pass it to our MenuHelper so that it can build our in-game menu for us.
+		We pass our parent mod table as the second argument so that any keybind functions can be found and called
+			as necessary.
+		We also pass our data table as the third argument so that our saved values can be loaded from it.
+	]]
+	MenuHelper:LoadFromJsonFile( MethHelper._path .. "menu/menu.json", MethHelper, MethHelper._data )
+
+end )
+
 -- Dialogue event codes
 local RatsFinishedID = "pln_rat_stage1_28"
 local RatsAddedID = "pln_rat_stage1_12"
@@ -45,12 +105,13 @@ function clampCeiling (val, vMax)
 	
 	return val
 end
+
 -- Trigger this every time there is dialogue
 local _queue_dialog_orig = DialogManager.queue_dialog
 function DialogManager:queue_dialog(id, ...)
 	
     -- If dialogue code is found in dict
-    if ingredient_dialog[id] then
+    if ingredient_dialog[id] and MethHelper.active_toggle then
 		-- If "batch finished" dialogue is played
 		if id == CookoffFinishedID or id == RatsFinishedID or id == BorderCrystalFinsishedID or id == BorderCrystalFinsishedID2 then
 			currentRecipe = 1
@@ -59,17 +120,30 @@ function DialogManager:queue_dialog(id, ...)
 			currentRecipeList ["Muriatic Acid"] = false
 			currentRecipeList ["Caustic Soda"] = false
 			currentRecipeList ["Hydrogen Chloride"] = false
-			
-			managers.chat:send_message (1, "[MethMagic]", "Total bags: [" .. totalBags .. "]", Color.green)
-		
+			--check menu options			
+			if MethHelper.silent_toggle then
+				managers.chat:_receive_message (1, "[MethMagic]", "Total bags: [" .. totalBags .. "]", Color.green)
+			else
+				managers.chat:send_message (1, "[MethMagic]", "Total bags: [" .. totalBags .. "]", Color.green)
+			end
 		-- If "ingredient added" dialogue is played
 		elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and ((currentRecipeList ["Muriatic Acid"] == true and currentRecipeList ["Caustic Soda"] == true and currentRecipeList ["Hydrogen Chloride"] ==  true) == false) and ((currentRecipeList ["Muriatic Acid"] == false and currentRecipeList ["Caustic Soda"] == false and currentRecipeList ["Hydrogen Chloride"] ==  false) == false) then
 			currentRecipe = clampCeiling (currentRecipe + 1, 3)
-			managers.chat:send_message (1, "[MethMagic]", "Ingredient added!", Color.green)
-		
+			if MethHelper.silent_toggle then
+				managers.chat:_receive_message (1, "[MethMagic]", "Ingredient added!", Color.green)
+
+			else
+				managers.chat:send_message (1, "[MethMagic]", "Ingredient added!", Color.green)
+			end
+
 		elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and currentRecipe == 3 then
 			currentRecipe = clampCeiling (currentRecipe + 1, 3)
-			managers.chat:send_message (1, "[MethMagic]", "Ingredient added!", Color.green)
+
+			if MethHelper.silent_toggle then
+				managers.chat:_receive_message (1, "[MethMagic]", "Ingredient added!", Color.green)
+			else
+				managers.chat:send_message (1, "[MethMagic]", "Ingredient added!", Color.green)
+			end
 		-- Else ID is for ingredient
 		else
 			-- Check to make sure that the ingredient is not already being echoed
@@ -78,7 +152,11 @@ function DialogManager:queue_dialog(id, ...)
 				currentRecipeList [ingredient_dialog [id]] = true
 			
 				-- Print text
-				managers.chat:send_message (1, "[MethMagic]", "[" .. currentRecipe .. "/3] [" .. ingredient_dialog[id] .. "]", Color.green)
+				if MethHelper.silent_toggle then
+					managers.chat:_receive_message (1, "[MethMagic]", "[" .. currentRecipe .. "/3] [" .. ingredient_dialog[id] .. "]", Color.green)
+				else
+					managers.chat:send_message (1, "[MethMagic]", "[" .. currentRecipe .. "/3] [" .. ingredient_dialog[id] .. "]", Color.green)
+				end
 			end
 		end
 	end
