@@ -1,7 +1,11 @@
 _G.MethHelper = _G.MethHelper or {}
 MethHelper._path = ModPath
-MethHelper._data_path = ModPath .. "saved_options_meth_helper.txt"
-MethHelper._data = {} 
+MethHelper._data_path = SavePath .. "Meth_helper.txt"
+MethHelper._data = {
+	active_toggle = true;
+	silent_toggle = false;
+}
+
 
 function MethHelper:Save()
 	local file = io.open( self._data_path, "w+" )
@@ -31,14 +35,14 @@ Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_MethHelper", function
 	MenuCallbackHandler.callback_meth_helper_active = function(self, item)
 		MethHelper._data.meth_helper_active_value = (item:value() == "on" and true or false)
 		MethHelper:Save()
-		MethHelper.active_toggle = item:value()
+		MethHelper._data.active_toggle = item:value()
 		log("Active Toggle is: " .. item:value())
 	end
 
 	MenuCallbackHandler.callback_meth_helper_silent = function(self, item)
 		MethHelper._data.meth_helper_silent_value = (item:value() == "on" and true or false)
 		MethHelper:Save()
-		MethHelper.silent_toggle = item:value()
+		MethHelper._data.silent_toggle = item:value()
 		log("Silent Toggle is: " .. item:value())
 	end
 
@@ -109,9 +113,12 @@ end
 -- Trigger this every time there is dialogue
 local _queue_dialog_orig = DialogManager.queue_dialog
 function DialogManager:queue_dialog(id, ...)
+	log("Dialouge is played, some debug stuff ...")
+	log("Silent Toggle is ..:" .. MethHelper._data.silent_toggle)
+	log("Active Toggle is ..:" .. MethHelper._data.active_toggle)
 	
     -- If dialogue code is found in dict
-    if ingredient_dialog[id] and MethHelper.active_toggle then
+    if ingredient_dialog[id] and MethHelper._data.active_toggle then
 		-- If "batch finished" dialogue is played
 		if id == CookoffFinishedID or id == RatsFinishedID or id == BorderCrystalFinsishedID or id == BorderCrystalFinsishedID2 then
 			currentRecipe = 1
@@ -121,7 +128,7 @@ function DialogManager:queue_dialog(id, ...)
 			currentRecipeList ["Caustic Soda"] = false
 			currentRecipeList ["Hydrogen Chloride"] = false
 			--check menu options			
-			if MethHelper.silent_toggle then
+			if MethHelper._data.silent_toggle then
 				managers.chat:_receive_message (1, "[MethMagic]", "Total bags: [" .. totalBags .. "]", Color.green)
 			else
 				managers.chat:send_message (1, "[MethMagic]", "Total bags: [" .. totalBags .. "]", Color.green)
@@ -129,7 +136,7 @@ function DialogManager:queue_dialog(id, ...)
 		-- If "ingredient added" dialogue is played
 		elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and ((currentRecipeList ["Muriatic Acid"] == true and currentRecipeList ["Caustic Soda"] == true and currentRecipeList ["Hydrogen Chloride"] ==  true) == false) and ((currentRecipeList ["Muriatic Acid"] == false and currentRecipeList ["Caustic Soda"] == false and currentRecipeList ["Hydrogen Chloride"] ==  false) == false) then
 			currentRecipe = clampCeiling (currentRecipe + 1, 3)
-			if MethHelper.silent_toggle then
+			if MethHelper._data.silent_toggle then
 				managers.chat:_receive_message (1, "[MethMagic]", "Ingredient added!", Color.green)
 
 			else
@@ -139,7 +146,7 @@ function DialogManager:queue_dialog(id, ...)
 		elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and currentRecipe == 3 then
 			currentRecipe = clampCeiling (currentRecipe + 1, 3)
 
-			if MethHelper.silent_toggle then
+			if MethHelper._data.silent_toggle then
 				managers.chat:_receive_message (1, "[MethMagic]", "Ingredient added!", Color.green)
 			else
 				managers.chat:send_message (1, "[MethMagic]", "Ingredient added!", Color.green)
@@ -152,7 +159,7 @@ function DialogManager:queue_dialog(id, ...)
 				currentRecipeList [ingredient_dialog [id]] = true
 			
 				-- Print text
-				if MethHelper.silent_toggle then
+				if MethHelper._data.silent_toggle then
 					managers.chat:_receive_message (1, "[MethMagic]", "[" .. currentRecipe .. "/3] [" .. ingredient_dialog[id] .. "]", Color.green)
 				else
 					managers.chat:send_message (1, "[MethMagic]", "[" .. currentRecipe .. "/3] [" .. ingredient_dialog[id] .. "]", Color.green)
