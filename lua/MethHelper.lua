@@ -106,6 +106,21 @@ currentRecipeList['Hydrogen Chloride'] = false
 IngredientCount = 0
 OldIngredientCount = 0
 
+function sendMethMessage()
+    if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
+        managers.chat:_receive_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
+    else
+        managers.chat:send_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
+    end
+end
+
+function getTotalIngredients(Table)
+    local ingredients = 0
+    for k, v in pairs(Table)
+        ingredients = ingredients + 1
+    end
+end 
+
 function countAddedIngredients(Table)
     local count = 0
     for i, v in pairs(Table) do
@@ -132,34 +147,22 @@ function DialogManager:queue_dialog(id, ...)
             currentRecipeList['Caustic Soda'] = false
             currentRecipeList['Hydrogen Chloride'] = false
             -- check menu options
-            if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
-                managers.chat:_receive_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
-            else
-                managers.chat:send_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
-            end
-        elseif
-            (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and ((currentRecipeList['Muriatic Acid'] == true and currentRecipeList['Caustic Soda'] == true and currentRecipeList['Hydrogen Chloride'] == true) == false) and
-                ((currentRecipeList['Muriatic Acid'] == false and currentRecipeList['Caustic Soda'] == false and currentRecipeList['Hydrogen Chloride'] == false) == false)
-         then
+           sendMethMessage()
+        elseif    
+            -- Dialouge is a Meth-related dialouge and it's neither the first ingredient nor a higher than 3 one     
+            (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) > 0 and countAddedIngredients(currentRecipeList) < getTotalIngredients()
+                then
             IngredientCount = countAddedIngredients(currentRecipeList)
             if IngredientCount > OldIngredientCount then
                 OldIngredientCount = IngredientCount
-                if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
-                    managers.chat:_receive_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
-                else
-                    managers.chat:send_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
-                end
+                sendMethMessage()
             end
-        elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) == 3 then
+          elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) == getTotalIngredients() then
             -- Else ID is for ingredient
             IngredientCount = countAddedIngredients(currentRecipeList)
             if IngredientCount > OldIngredientCount then
                 OldIngredientCount = IngredientCount
-                if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
-                    managers.chat:_receive_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
-                else
-                    managers.chat:send_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
-                end
+               sendMethMessage()
             end
         else
             -- Check to make sure that the ingredient is not already being echoed
@@ -168,11 +171,7 @@ function DialogManager:queue_dialog(id, ...)
                 currentRecipeList[ingredient_dialog[id]] = true
 
                 -- Print text
-                if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
-                    managers.chat:_receive_message(1, '[SilentMethMagic]', '[' .. countAddedIngredients(currentRecipeList) .. '/3] [' .. ingredient_dialog[id] .. ']', Color.green)
-                else
-                    managers.chat:send_message(1, '[SilentMethMagic]', '[' .. countAddedIngredients(currentRecipeList) .. '/3] [' .. ingredient_dialog[id] .. ']', Color.green)
-                end
+               sendMethMessage()
             end
         end
     end
