@@ -106,19 +106,34 @@ currentRecipeList['Hydrogen Chloride'] = false
 IngredientCount = 0
 OldIngredientCount = 0
 
-function sendMethMessage()
-    if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
-        managers.chat:_receive_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
-    else
-        managers.chat:send_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
+function sendMethMessage(number, id)
+    if number == 1 then
+        if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
+            managers.chat:_receive_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
+        else
+            managers.chat:send_message(1, '[SilentMethMagic]', 'Ingredient added!', Color.green)
+        end
+    elseif number == 2 then
+        if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
+            managers.chat:_receive_message(1, '[SilentMethMagic]', '[' .. countAddedIngredients(currentRecipeList) .. '/3] [' .. ingredient_dialog[id] .. ']', Color.green)
+        else
+            managers.chat:send_message(1, '[SilentMethMagic]', '[' .. countAddedIngredients(currentRecipeList) .. '/3] [' .. ingredient_dialog[id] .. ']', Color.green)
+        end
+    elseif number == 3 then
+        if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
+            managers.chat:_receive_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
+        else
+            managers.chat:send_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
+        end
     end
 end
 
 function getTotalIngredients(Table)
     local ingredients = 0
-    for k, v in pairs(Table)
+    for k, v in pairs(Table) do
         ingredients = ingredients + 1
     end
+    return ingredients
 end 
 
 function countAddedIngredients(Table)
@@ -147,22 +162,14 @@ function DialogManager:queue_dialog(id, ...)
             currentRecipeList['Caustic Soda'] = false
             currentRecipeList['Hydrogen Chloride'] = false
             -- check menu options
-           sendMethMessage()
+           sendMethMessage(3, id) -- Total bags ...
         elseif    
-            -- Dialouge is a Meth-related dialouge and it's neither the first ingredient nor a higher than 3 one     
-            (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) > 0 and countAddedIngredients(currentRecipeList) < getTotalIngredients()
-                then
+            -- Dialouge is a Meth-related dialouge and it's neither 0 nor a higher than 3    
+            (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) > 0 and countAddedIngredients(currentRecipeList) <= getTotalIngredients(currentRecipeList) then
             IngredientCount = countAddedIngredients(currentRecipeList)
             if IngredientCount > OldIngredientCount then
                 OldIngredientCount = IngredientCount
-                sendMethMessage()
-            end
-          elseif (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) == getTotalIngredients() then
-            -- Else ID is for ingredient
-            IngredientCount = countAddedIngredients(currentRecipeList)
-            if IngredientCount > OldIngredientCount then
-                OldIngredientCount = IngredientCount
-               sendMethMessage()
+                sendMethMessage(1, id) -- Ingredient Added
             end
         else
             -- Check to make sure that the ingredient is not already being echoed
@@ -171,7 +178,7 @@ function DialogManager:queue_dialog(id, ...)
                 currentRecipeList[ingredient_dialog[id]] = true
 
                 -- Print text
-               sendMethMessage()
+               sendMethMessage(2, id) --Ingredient is ....
             end
         end
     end
