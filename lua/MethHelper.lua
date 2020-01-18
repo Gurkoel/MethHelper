@@ -105,10 +105,12 @@ local currentRecipeList = {}
 currentRecipeList['Muriatic Acid'] = false
 currentRecipeList['Caustic Soda'] = false
 currentRecipeList['Hydrogen Chloride'] = false
-local ingredientAddedCount = 0
 
-IngredientCount = 0
-OldIngredientCount = 0
+
+
+local lastAdded = false
+local IngredientCount = 0
+local OldIngredientCount = 0
 
 function sendMethMessage(number, id)
     if number == 1 then
@@ -129,6 +131,12 @@ function sendMethMessage(number, id)
         else
             managers.chat:send_message(1, '[SilentMethMagic]', 'Total bags: [' .. totalBags .. ']', Color.green)
         end
+    elseif number == 4 then
+        if MethHelper._data.silent_toggle == true or MethHelper._data.silent_toggle == 'on' then
+            managers.chat:_receive_message(1, '[SilentMethMagic]', 'No finished dialouge caught, Bag-count is being guessed by now', Color.red)
+        else
+            managers.chat:send_message(1, '[SilentMethMagic]', 'No finished dialouge caught, Bag-count is being guessed by now', Color.red)
+        end
     end
 end
 
@@ -139,12 +147,15 @@ function isMethFinished(id)
         end
     end
 end
-    
-function isAddedMaxCountReached()
-    if self.ingredientAddedCount == 3 then
-        return true
+
+function isIngredient(id)
+    for i,v in pairs(ingredient_dialog) do
+        if v == 'Muriatic Acid' or v == 'Caustic Soda' or v == 'Hydrogen Chloride' then
+            return true
+        end
     end
 end
+    
 
 function getTotalIngredients(Table)
     local ingredients = 0
@@ -170,6 +181,8 @@ function DialogManager:queue_dialog(id, ...)
 
     -- If dialogue code is found in dict
     if ingredient_dialog[id] and MethHelper._data.active_toggle == true or MethHelper._data.active_toggle == 'on' then
+       --check if Bag finished dialog wasn't played this happens i.E in cook off after bag 8
+
         -- If "batch finished" dialogue is played
         if isMethFinished(id) == true then
             -- If "BAg finished" dialogue is played
@@ -179,32 +192,55 @@ function DialogManager:queue_dialog(id, ...)
             currentRecipeList['Muriatic Acid'] = false
             currentRecipeList['Caustic Soda'] = false
             currentRecipeList['Hydrogen Chloride'] = false
-            self.ingredientAddedCount = 0
+            lastAdded = false
             -- check menu options
            sendMethMessage(3, id) -- Total bags ...
-        elseif 
+        elseif
             -- Dialouge is a Meth-related dialouge and it's neither 0 nor a higher than 3    
             (id == CookoffAddedID or id == RatsAddedID or id == BorderCrystalAddedID) and countAddedIngredients(currentRecipeList) > 0 and countAddedIngredients(currentRecipeList) <= getTotalIngredients(currentRecipeList) then
             IngredientCount = countAddedIngredients(currentRecipeList)
             if IngredientCount > OldIngredientCount then
                 OldIngredientCount = IngredientCount
-                self.ingredientAddedCount = self.ingredientAddedCount + 1
                 sendMethMessage(1, id) -- Ingredient Added
+                if IngredientCount == getTotalIngredients(currentRecipeList) then
+                    lastAdded = true
+                else
+                    lastAdded = false
+                end
             end
+        elseif isIngredient(id) and lastAdded == true and countAddedIngredients(currentRecipeList) != getTotalIngredients(currentRecipeList) then
+            sendMethMessage(4, id) --something went wrong
+            OldIngredientCount = 0
+            totalBags = totalBags + 1
+            -- Reset recipe state
+            currentRecipeList['Muriatic Acid'] = false
+            currentRecipeList['Caustic Soda'] = false
+            currentRecipeList['Hydrogen Chloride'] = false
+            sendMethMessage(3, id) --guessed total bags
         else
             -- Check to make sure that the ingredient is not already being echoed
             if currentRecipeList[ingredient_dialog[id]] == false then
                 -- Flip the flag
                 currentRecipeList[ingredient_dialog[id]] = true
-
                 -- Print text
                sendMethMessage(2, id) --Ingredient is ....
             end
         end
---[[     elseif isAddedMaxCountReached() == true then
-        self.ingredientAddedCount = 0
-    end ]]
     end
+
+    -- ideas to fix:
+    -- create a variable which saves the last ingredient
+        -- check if dialog ID is a new ingredient --> if so reset counter
+        -- give warning after bag 8 and remind that calculations might be wrong
+            -- You might have to pour in twice the same in a row
+            -- need a solution for that
+    -- if it is an ingredient and last ingrediend was already added you can assure it is faulty and warn the player
+
+    -- Possibility to trigger when 3 ingredients are added and next dialog is not an ID-Dialog?
+          -- Is there always a dialog inbetween?
+          -- Might happen between finish and last ingredient
+            --> Faulty value
+    -- 
     -- for event mapping
      log("DialogManager: said " .. tostring(id))
      managers.chat:send_message(ChatManager.GAME, managers.network.account:username() or "Offline", id)
