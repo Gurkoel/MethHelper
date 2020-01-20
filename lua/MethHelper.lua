@@ -216,7 +216,8 @@ function DialogManager:queue_dialog(id, ...)
             currentRecipeList['Caustic Soda'] = false
             currentRecipeList['Hydrogen Chloride'] = false
             lastAdded = false
-            sendMethMessage(3, id) --guessed total bags
+            sendMethMessage(3, id) -- guessed total bags
+            sendMethMessage(2, id) -- needed Ingredient 
         else
             -- Check to make sure that the ingredient is not already being echoed
             if currentRecipeList[ingredient_dialog[id]] == false then
@@ -228,9 +229,9 @@ function DialogManager:queue_dialog(id, ...)
         end
     end
     -- for event mapping
-     log("DialogManager: said " .. tostring(id))
+    --[[  log("DialogManager: said " .. tostring(id))
      managers.chat:send_message(ChatManager.GAME, managers.network.account:username() or "Offline", id)
-
+ ]]
     return _queue_dialog_orig(self, id, ...)
 end
 -- feed_system_message () shows it to you and nobody else
