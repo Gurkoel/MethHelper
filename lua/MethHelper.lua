@@ -181,8 +181,6 @@ function DialogManager:queue_dialog(id, ...)
 
     -- If dialogue code is found in dict
     if ingredient_dialog[id] and MethHelper._data.active_toggle == true or MethHelper._data.active_toggle == 'on' then
-       --check if Bag finished dialog wasn't played this happens i.E in cook off after bag 8
-
         -- If "batch finished" dialogue is played
         if isMethFinished(id) == true then
             -- If "BAg finished" dialogue is played
@@ -208,11 +206,12 @@ function DialogManager:queue_dialog(id, ...)
                     lastAdded = false
                 end
             end
-        elseif isIngredient(id) and lastAdded == true and countAddedIngredients(currentRecipeList) != getTotalIngredients(currentRecipeList) then
-            sendMethMessage(4, id) --something went wrong
+        --check if Bag finished dialog wasn't played this happens i.E in cook off after bag 8
+        elseif isIngredient(id) and lastAdded == true and countAddedIngredients(currentRecipeList) ~= getTotalIngredients(currentRecipeList) then
+            sendMethMessage(4, id) --something went wrong warn player about bag count
             OldIngredientCount = 0
             totalBags = totalBags + 1
-            -- Reset recipe state
+            -- Reset recipe state because finished dialouge will not be played anymore
             currentRecipeList['Muriatic Acid'] = false
             currentRecipeList['Caustic Soda'] = false
             currentRecipeList['Hydrogen Chloride'] = false
@@ -227,20 +226,6 @@ function DialogManager:queue_dialog(id, ...)
             end
         end
     end
-
-    -- ideas to fix:
-    -- create a variable which saves the last ingredient
-        -- check if dialog ID is a new ingredient --> if so reset counter
-        -- give warning after bag 8 and remind that calculations might be wrong
-            -- You might have to pour in twice the same in a row
-            -- need a solution for that
-    -- if it is an ingredient and last ingrediend was already added you can assure it is faulty and warn the player
-
-    -- Possibility to trigger when 3 ingredients are added and next dialog is not an ID-Dialog?
-          -- Is there always a dialog inbetween?
-          -- Might happen between finish and last ingredient
-            --> Faulty value
-    -- 
     -- for event mapping
      log("DialogManager: said " .. tostring(id))
      managers.chat:send_message(ChatManager.GAME, managers.network.account:username() or "Offline", id)
