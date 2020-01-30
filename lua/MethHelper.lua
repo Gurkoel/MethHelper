@@ -107,7 +107,6 @@ currentRecipeList['Caustic Soda'] = false
 currentRecipeList['Hydrogen Chloride'] = false
 
 
-
 local lastAdded = false
 local IngredientCount = 0
 local OldIngredientCount = 0
@@ -164,6 +163,7 @@ function getTotalIngredients(Table)
     end
     return ingredients
 end 
+
 
 function countAddedIngredients(Table)
     local count = 0
@@ -229,9 +229,10 @@ function DialogManager:queue_dialog(id, ...)
         end
     end
     -- for event mapping
-    --[[  log("DialogManager: said " .. tostring(id))
-     managers.chat:send_message(ChatManager.GAME, managers.network.account:username() or "Offline", id)
- ]]
+
+    -- log("DialogManager: said " .. tostring(id))
+    -- managers.chat:send_message(ChatManager.GAME, managers.network.account:username() or "Offline", id)
+
     return _queue_dialog_orig(self, id, ...)
 end
 -- feed_system_message () shows it to you and nobody else
