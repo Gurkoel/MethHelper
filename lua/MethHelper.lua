@@ -88,7 +88,7 @@ ingredient_dialog['Play_loc_mex_cook_04'] = 'Caustic Soda'
 ingredient_dialog['Play_loc_mex_cook_05'] = 'Hydrogen Chloride'
 -- Round about hacky way to trigger by both ingredients and recipe state dialogue
 
-local batchFinishedDialog = {"pln_rat_stage1_28","pln_rt1_28","Play_loc_mex_cook_17","Play_loc_mex_cook_13","Play_loc_mex_cook_22"}
+local batchFinishedDialog = {"pln_rat_stage1_28","pln_rt1_28","Play_loc_mex_cook_17","Play_loc_mex_cook_13"}
 
 ingredient_dialog[RatsFinishedID] = true
 ingredient_dialog[RatsAddedID] = true
